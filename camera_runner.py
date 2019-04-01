@@ -1,3 +1,5 @@
+import upload_bucket
+import temp_track
 #Camera Library
 from picamera import PiCamera, Color
 from time import sleep
@@ -9,6 +11,7 @@ from skimage.measure import compare_ssim as ssim
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
+import atexit
 
 DESTINATION = '/home/pi/Desktop/security/'
 IMAGE_ONE = DESTINATION+'pic_one.jpeg'
@@ -25,21 +28,25 @@ DiffThreshold = .7
 if (os.path.isdir('/home/pi/Desktop/security/')==False):
 	os.mkdir('/home/pi/Desktop/security/')
 
-def main(camera):
-	setup_camera_lowres(camera)
+def start_camera():
+	global Camera
+	setup_camera_lowres(Camera)
 	opposite = False
 	while True:
-		if(takePictureAnalysis(camera, opposite)):
-			takePictureBurst(camera)
-		else:
-			print('no difference')
-		sleep(.1)
+		if(takePictureAnalysis(Camera, opposite)):
+			trigger_event(Camera)
+		sleep(.4)
+		print("temp "+temp_track.measure_temp())
 		opposite = not opposite
 
+def trigger_event(camera):
+	takePictureBurst(camera)
+	upload_bucket.upload_newest_pic()
+	print("Upload!")
 def setup_camera_highres(camera):
 	camera.rotation = 180
 	camera.start_preview(alpha = 200)
-	camera.resolution = (1920,1080)
+	camera.resolution = (400,400)
 
 def setup_camera_lowres(camera):
 	camera.rotation = 180
@@ -74,13 +81,16 @@ def takePictureBurst(camera):
 	setup_camera_lowres(camera)
 
 def compareTwoPics(pic1, pic2):
-	print("start ssim")
+#	print("start ssim")
 	img1 = cv2.imread(IMAGE_ONE)
 	img2 = cv2.imread(IMAGE_TWO)
 	img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
 	img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 	s = ssim(img1, img2)
-	print('end ssim: '+str(s))
+#	print('end ssim: '+str(s))
 	return s
 
-main(Camera)
+def exit_message():
+	print("\nEnd of camera!\n")
+
+atexit.register(exit_message)
