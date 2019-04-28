@@ -1,18 +1,12 @@
 import os
 import time
+import threading
 
-temp=""
+temp = 0
 measure=True
 
-def measure_temp():
-        temp = os.popen("vcgencmd measure_temp").readline()
-        return (temp.replace("temp=",""))
-
-def start_measure():
-	while measure:
-        	print(measure_temp())
-        	time.sleep(5)
-
-def end_measure():
-	global measure
-	measure=false
+def poll_temp():
+        global temp
+	temp = os.popen("vcgencmd measure_temp").readline()
+	ts = time.time()
+        return temp.replace("temp=","") + " id: " + str(threading.current_thread())

@@ -36,13 +36,14 @@ def start_camera():
 		if(takePictureAnalysis(Camera, opposite)):
 			trigger_event(Camera)
 		sleep(.4)
-		print("temp "+temp_track.measure_temp())
+		print("temp " + temp_track.poll_temp())
 		opposite = not opposite
 
 def trigger_event(camera):
 	takePictureBurst(camera)
 	upload_bucket.upload_newest_pic()
 	print("Upload!")
+
 def setup_camera_highres(camera):
 	camera.rotation = 180
 	camera.start_preview(alpha = 200)
